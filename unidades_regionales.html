@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unidades Regionales — ProNEFor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde-monte: #223A2C;
+    --verde-monte-2: #2F4F3A;
+    --papel: #F1EFE4;
+    --papel-2: #E6E2D2;
+    --tierra: #8A5A34;
+    --ocre: #B9812E;
+    --tinta: #1C1A16;
+    --tinta-suave: #514E44;
+    --linea: #C9C3AC;
+    --blanco: #FBFAF5;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--papel);
+    color:var(--tinta);
+    font-family:"IBM Plex Sans", sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:"Fraunces", serif;
+    font-weight:600;
+    margin:0;
+    color:var(--verde-monte);
+  }
+
+  header.top{
+    background: var(--verde-monte);
+    color: var(--blanco);
+    padding: 2.4rem 1.5rem 2rem;
+  }
+  .top-inner{ max-width:1280px; margin:0 auto; }
+  .eyebrow{ font-size:.82rem; color:#C9D8C4; margin-bottom:.6rem; }
+  header.top h1{
+    color:var(--blanco);
+    font-size:clamp(1.6rem, 3vw, 2.3rem);
+    font-weight:500;
+    max-width:44ch;
+    line-height:1.15;
+  }
+  header.top p.sub{
+    margin-top:.7rem;
+    max-width:60ch;
+    color:#D8E0D2;
+    font-size:.96rem;
+  }
+
+  main{
+    max-width:1280px;
+    margin:0 auto;
+    padding:1.6rem 1.5rem 4rem;
+    display:grid;
+    grid-template-columns:minmax(340px, 560px) 1fr;
+    gap:1.6rem;
+    align-items:start;
+  }
+  @media (max-width: 880px){
+    main{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Mapa ---------- */
+  .panel-mapa{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    padding:1rem;
+    position:sticky;
+    top:1rem;
+  }
+  @media (max-width:880px){ .panel-mapa{ position:static; } }
+  #mapaSvg{ width:100%; height:auto; display:block; }
+  #mapaSvg path{
+    stroke:var(--blanco);
+    stroke-width:1.3;
+    cursor:pointer;
+    transition:opacity .12s;
+  }
+  #mapaSvg path:hover{ opacity:.82; }
+  #mapaSvg path.activa{
+    stroke:var(--tinta);
+    stroke-width:2.2;
+  }
+  .mapa-leyenda{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(150px,1fr));
+    gap:.4rem;
+    margin-top:1rem;
+    padding-top:.9rem;
+    border-top:1px solid var(--linea);
+  }
+  .mapa-leyenda button{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    background:none;
+    border:1px solid transparent;
+    padding:.3rem .4rem;
+    text-align:left;
+    font-size:.82rem;
+    color:var(--tinta);
+    cursor:pointer;
+    border-radius:2px;
+    font-family:inherit;
+  }
+  .mapa-leyenda button:hover{ background:var(--papel-2); }
+  .mapa-leyenda button.activa{ border-color:var(--tinta); background:var(--papel-2); font-weight:600; }
+  .mapa-leyenda .punto{
+    width:.8rem; height:.8rem; border-radius:1px; flex:none;
+  }
+
+  /* ---------- Panel de detalle ---------- */
+  .panel-detalle{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    padding:1.6rem;
+    min-height:420px;
+  }
+  .detalle-vacio{
+    color:var(--tinta-suave);
+    font-size:.94rem;
+    padding:2rem 0;
+  }
+  .detalle-header{
+    display:flex;
+    align-items:baseline;
+    gap:.7rem;
+    flex-wrap:wrap;
+    margin-bottom:.3rem;
+  }
+  .detalle-header h2{ font-size:1.4rem; }
+  .detalle-chip{
+    display:inline-block;
+    padding:.15rem .55rem;
+    border-radius:2px;
+    font-size:.78rem;
+    background:var(--papel-2);
+    color:var(--tinta-suave);
+  }
+  .detalle-coordinador{
+    margin-top:.3rem;
+    font-size:.92rem;
+    color:var(--tinta-suave);
+  }
+  .detalle-provincias{
+    margin-top:.5rem;
+    font-size:.86rem;
+    color:var(--tinta-suave);
+  }
+  .detalle-resumen{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--linea);
+    border:1px solid var(--linea);
+    margin:1.2rem 0;
+  }
+  .detalle-resumen .celda{
+    background:var(--papel);
+    padding:.8rem .9rem;
+  }
+  .detalle-resumen .num{
+    font-family:"Fraunces", serif;
+    font-size:1.5rem;
+    color:var(--verde-monte);
+    line-height:1;
+  }
+  .detalle-resumen .etiqueta{
+    margin-top:.25rem;
+    font-size:.76rem;
+    color:var(--tinta-suave);
+  }
+
+  .detalle-seccion h3{
+    font-size:.95rem;
+    font-weight:600;
+    margin:1.6rem 0 .6rem;
+    padding-bottom:.4rem;
+    border-bottom:1px solid var(--linea);
+  }
+  table.tabla-detalle{
+    border-collapse:collapse;
+    width:100%;
+    font-size:.84rem;
+  }
+  table.tabla-detalle th{
+    text-align:left;
+    font-weight:600;
+    color:var(--verde-monte);
+    background:var(--papel-2);
+    padding:.5rem .6rem;
+    white-space:nowrap;
+  }
+  table.tabla-detalle td{
+    padding:.5rem .6rem;
+    border-bottom:1px solid #EAE6D8;
+    vertical-align:top;
+  }
+  table.tabla-detalle tr:hover td{ background:#F7F5EA; }
+  .estado-ok{ color:var(--verde-monte-2); }
+  .estado-mal{ color:#A6432F; }
+  .tabla-wrap-detalle{ overflow-x:auto; }
+  .km{ font-family:"IBM Plex Mono", monospace; font-size:.78rem; }
+  .dominio{ font-family:"IBM Plex Mono", monospace; font-size:.78rem; color:var(--tinta-suave); }
+
+  .notas{
+    max-width:1280px;
+    margin:0 auto;
+    padding:0 1.5rem 3rem;
+    font-size:.82rem;
+    color:var(--tinta-suave);
+  }
+  .notas b{ color:var(--tinta); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="eyebrow">Programa Nacional de Extensión Forestal · Coordinación de Bosques Nativos</div>
+    <h1>Unidades Regionales de Extensión (URE)</h1>
+    <p class="sub">Mapa interactivo de las 8 regionales del programa: provincias que cubre cada una, equipo y vehículos asignados. Hacé clic en una región del mapa o en la lista para ver el detalle.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel-mapa">
+    <div id="mapaSvg"></div>
+    <div class="mapa-leyenda" id="mapaLeyenda"></div>
+  </section>
+
+  <section class="panel-detalle" id="panelDetalle">
+    <div class="detalle-vacio">Elegí una URE en el mapa o en la lista para ver su información.</div>
+  </section>
+</main>
+
+<div class="notas">
+  <p><b>Sobre estos datos:</b> la información de personal se limita a nombre, cargo y provincia de residencia — no se muestran datos personales sensibles (CUIT, fecha de nacimiento, dirección, teléfono ni correos). La de vehículos se limita a marca, modelo, dominio, ciudad, responsable de uso, kilometraje y estado operativo. Dos vehículos que en la planilla no tenían la columna "Regional" cargada se asignaron cruzando el nombre del responsable de uso con su URE en la planilla de personal (Flavia Bernio → URE 4, Silvia Castañeda → URE 7).</p>
+</div>
+
+<script src="datos_ures.js"></script>
+<script>
+(function(){
+  const COLOR_URE = {
+    "1": "#8A5A34", "2": "#7A9B5E", "3": "#6B5B95", "4": "#C97B2E",
+    "5": "#C9A66B", "6": "#A6432F", "7": "#4C7A96", "8": "#8FA6B0",
+    "CENTRAL": "#514E44"
+  };
+  const NOMBRE_URE = {
+    "1":"URE 1", "2":"URE 2", "3":"URE 3", "4":"URE 4",
+    "5":"URE 5", "6":"URE 6", "7":"URE 7", "8":"URE 8",
+    "CENTRAL":"Oficina Central"
+  };
+
+  let ureActiva = null;
+
+  function pintarMapa(){
+    const cont = document.getElementById("mapaSvg");
+    let paths = "";
+    Object.keys(MAPA_PATHS.paths).forEach(prov=>{
+      const ure = String(PROVINCIA_URE[prov]);
+      const color = COLOR_URE[ure] || "#CCC";
+      paths += `<path d="${MAPA_PATHS.paths[prov]}" fill="${color}" data-ure="${ure}" data-prov="${prov}"><title>${prov} — ${NOMBRE_URE[ure] || ure}</title></path>`;
+    });
+    cont.innerHTML = `<svg id="mapaSvgEl" viewBox="0 0 ${MAPA_PATHS.ancho} ${MAPA_PATHS.alto}" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+    cont.querySelectorAll("path").forEach(p=>{
+      p.addEventListener("click", ()=> seleccionarURE(p.getAttribute("data-ure")));
+    });
+  }
+
+  function pintarLeyenda(){
+    const cont = document.getElementById("mapaLeyenda");
+    const claves = ["1","2","3","4","5","6","7","8","CENTRAL"];
+    cont.innerHTML = "";
+    claves.forEach(k=>{
+      const b = document.createElement("button");
+      b.innerHTML = `<span class="punto" style="background:${COLOR_URE[k]}"></span>${NOMBRE_URE[k]}`;
+      b.addEventListener("click", ()=> seleccionarURE(k));
+      b.dataset.ure = k;
+      cont.appendChild(b);
+    });
+  }
+
+  function normEstadoVehiculo(estado){
+    const e = (estado || "").toLowerCase();
+    if(e.startsWith("operativo sin")) return "ok";
+    if(e.startsWith("operativo")) return "ok";
+    return "mal";
+  }
+
+  function pintarDetalle(k){
+    const datos = URES_DATA[k];
+    const panel = document.getElementById("panelDetalle");
+    if(!datos){
+      panel.innerHTML = '<div class="detalle-vacio">Elegí una URE en el mapa o en la lista para ver su información.</div>';
+      return;
+    }
+
+    const provinciasTxt = datos.provincias.join(", ");
+    const coordinadorTxt = datos.coordinador
+      ? `<div class="detalle-coordinador">Coordinador/a: <b>${datos.coordinador}</b></div>`
+      : "";
+
+    const filasPersonal = datos.personal.map(p => `
+      <tr>
+        <td>${p.nombre}</td>
+        <td>${p.cargo}</td>
+        <td>${p.provincia || "—"}</td>
+      </tr>`).join("");
+
+    const filasVehiculos = datos.vehiculos.map(v => `
+      <tr>
+        <td>${v.marca || "—"} ${v.modelo || ""}</td>
+        <td>${v.anio || "—"}</td>
+        <td class="dominio">${v.dominio || "—"}</td>
+        <td>${v.ciudad || "—"}</td>
+        <td>${v.responsable || "—"}</td>
+        <td class="km">${v.km ? v.km.toLocaleString("es-AR") + " km" : "—"}</td>
+        <td class="${normEstadoVehiculo(v.estado) === 'ok' ? 'estado-ok' : 'estado-mal'}">${(v.estado || "—").split("\\n")[0]}</td>
+      </tr>`).join("");
+
+    panel.innerHTML = `
+      <div class="detalle-header">
+        <h2>${NOMBRE_URE[k]}</h2>
+        <span class="detalle-chip">${datos.personal.length} persona${datos.personal.length===1?"":"s"}</span>
+      </div>
+      ${coordinadorTxt}
+      <div class="detalle-provincias">Provincias: ${provinciasTxt}</div>
+
+      <div class="detalle-resumen">
+        <div class="celda">
+          <div class="num">${datos.personal.length}</div>
+          <div class="etiqueta">Personas en el equipo</div>
+        </div>
+        <div class="celda">
+          <div class="num">${datos.vehiculos.length}</div>
+          <div class="etiqueta">Vehículos asignados</div>
+        </div>
+        <div class="celda">
+          <div class="num">${datos.provincias.length}</div>
+          <div class="etiqueta">Provincia${datos.provincias.length===1?"":"s"} que cubre</div>
+        </div>
+      </div>
+
+      <div class="detalle-seccion">
+        <h3>Equipo</h3>
+        <div class="tabla-wrap-detalle">
+          <table class="tabla-detalle">
+            <thead><tr><th>Nombre</th><th>Cargo</th><th>Provincia de residencia</th></tr></thead>
+            <tbody>${filasPersonal || '<tr><td colspan="3">Sin personal cargado.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+
+      ${datos.vehiculos.length ? `
+      <div class="detalle-seccion">
+        <h3>Vehículos</h3>
+        <div class="tabla-wrap-detalle">
+          <table class="tabla-detalle">
+            <thead><tr><th>Marca / modelo</th><th>Año</th><th>Dominio</th><th>Ciudad</th><th>Responsable</th><th>Km</th><th>Estado</th></tr></thead>
+            <tbody>${filasVehiculos}</tbody>
+          </table>
+        </div>
+      </div>` : ""}
+    `;
+  }
+
+  function seleccionarURE(k){
+    ureActiva = k;
+    document.querySelectorAll("#mapaSvgEl path").forEach(p=>{
+      p.classList.toggle("activa", p.getAttribute("data-ure") === k);
+    });
+    document.querySelectorAll(".mapa-leyenda button").forEach(b=>{
+      b.classList.toggle("activa", b.dataset.ure === k);
+    });
+    pintarDetalle(k);
+  }
+
+  pintarMapa();
+  pintarLeyenda();
+})();
+</script>
+</body>
+</html>

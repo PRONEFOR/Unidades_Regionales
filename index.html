@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoreo de Planes — ProNEFor / DBN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde-monte: #223A2C;
+    --verde-monte-2: #2F4F3A;
+    --papel: #F1EFE4;
+    --papel-2: #E6E2D2;
+    --tierra: #8A5A34;
+    --ocre: #B9812E;
+    --rojo-alerta: #A6432F;
+    --tinta: #1C1A16;
+    --tinta-suave: #514E44;
+    --linea: #C9C3AC;
+    --blanco: #FBFAF5;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--papel);
+    color:var(--tinta);
+    font-family:"IBM Plex Sans", sans-serif;
+    line-height:1.5;
+  }
+
+  h1,h2,h3{
+    font-family:"Fraunces", serif;
+    font-weight:600;
+    margin:0;
+    color:var(--verde-monte);
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    background: var(--verde-monte);
+    color: var(--blanco);
+    padding: 2.4rem 1.5rem 2rem;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute;
+    right:-6%;
+    top:-30%;
+    width:420px;
+    height:420px;
+    border:1px solid rgba(251,250,245,.14);
+    border-radius:50%;
+  }
+  header.top::before{
+    content:"";
+    position:absolute;
+    right:10%;
+    top:8%;
+    width:230px;
+    height:230px;
+    border:1px solid rgba(251,250,245,.10);
+    border-radius:50%;
+  }
+  .top-inner{
+    max-width:1180px;
+    margin:0 auto;
+    position:relative;
+  }
+  .eyebrow{
+    font-size:.82rem;
+    letter-spacing:.02em;
+    color:#C9D8C4;
+    margin-bottom:.6rem;
+  }
+  header.top h1{
+    color:var(--blanco);
+    font-size:clamp(1.7rem, 3vw, 2.5rem);
+    font-weight:500;
+    max-width:34ch;
+    line-height:1.15;
+  }
+  header.top p.sub{
+    margin-top:.85rem;
+    max-width:52ch;
+    color:#D8E0D2;
+    font-size:.98rem;
+  }
+  .meta-line{
+    margin-top:1.4rem;
+    font-size:.82rem;
+    color:#AEC0A7;
+  }
+
+  /* ---------- Layout ---------- */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 1.5rem 4rem;
+  }
+
+  /* ---------- Summary strip ---------- */
+  .resumen{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1px;
+    background:var(--linea);
+    margin-top:-1.6rem;
+    border:1px solid var(--linea);
+  }
+  .resumen .celda{
+    background:var(--blanco);
+    padding:1.3rem 1.3rem 1.1rem;
+  }
+  .resumen .num{
+    font-family:"Fraunces", serif;
+    font-size:2.1rem;
+    color:var(--verde-monte);
+    line-height:1;
+  }
+  .resumen .num small{ font-size:1.1rem; font-weight:400; color:var(--tinta-suave); }
+  .resumen .etiqueta{
+    margin-top:.4rem;
+    font-size:.82rem;
+    color:var(--tinta-suave);
+  }
+
+  /* ---------- Tabs (years) ---------- */
+  /* ---------- Panorama / gráfico ---------- */
+  .panorama{
+    margin-top:2rem;
+  }
+  .panorama h2{
+    font-size:1.05rem;
+    font-weight:500;
+    color:var(--verde-monte);
+    margin-bottom:.9rem;
+  }
+  .grafico-wrap{
+    overflow-x:auto;
+    border:1px solid var(--linea);
+    background:var(--blanco);
+    padding:1rem .5rem .5rem;
+  }
+  .grafico-vacio{
+    padding:1.6rem 1rem;
+    color:var(--tinta-suave);
+    font-size:.86rem;
+  }
+  .grafico-leyenda{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.9rem;
+    padding:0 .5rem .8rem;
+    font-size:.8rem;
+    color:var(--tinta-suave);
+  }
+  .grafico-leyenda span.punto{
+    display:inline-block;
+    width:.65rem;
+    height:.65rem;
+    border-radius:1px;
+    margin-right:.35rem;
+    vertical-align:middle;
+  }
+
+  .anios{
+    display:flex;
+    gap:.4rem;
+    margin-top:2.4rem;
+    border-bottom:1px solid var(--linea);
+  }
+  .anios button{
+    font-family:"Fraunces", serif;
+    font-size:1.15rem;
+    background:none;
+    border:none;
+    padding:.6rem 1.1rem .7rem;
+    cursor:pointer;
+    color:var(--tinta-suave);
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .anios button.activo{
+    color:var(--verde-monte);
+    border-bottom:2px solid var(--tierra);
+  }
+
+  /* ---------- Filters ---------- */
+  .filtros{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.7rem;
+    align-items:center;
+    margin:1.4rem 0 1.1rem;
+  }
+  .filtros select, .filtros input[type="text"]{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:.88rem;
+    padding:.5rem .7rem;
+    border:1px solid var(--linea);
+    background:var(--blanco);
+    color:var(--tinta);
+    border-radius:2px;
+  }
+  .filtros input[type="text"]{ flex:1; min-width:200px; }
+  .filtros .limpiar{
+    font-size:.82rem;
+    color:var(--tierra);
+    background:none;
+    border:none;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:.3rem 0;
+  }
+  .conteo-filtro{
+    font-size:.82rem;
+    color:var(--tinta-suave);
+    margin-bottom:.8rem;
+  }
+
+  /* ---------- Botones ---------- */
+  .btn-primario, .btn-secundario{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:.85rem;
+    font-weight:500;
+    padding:.55rem .9rem;
+    border-radius:2px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-primario{
+    background:var(--verde-monte);
+    color:var(--blanco);
+    border:1px solid var(--verde-monte);
+  }
+  .btn-primario:hover{ background:var(--verde-monte-2); }
+  .btn-primario:disabled{ opacity:.6; cursor:default; }
+  .btn-secundario{
+    background:var(--blanco);
+    color:var(--tinta-suave);
+    border:1px solid var(--linea);
+  }
+  .btn-secundario:hover{ border-color:var(--tierra); color:var(--tierra); }
+
+  #estadoCarga{
+    font-size:.82rem;
+    color:var(--tinta-suave);
+    margin-bottom:.6rem;
+  }
+  #estadoCarga.error{ color:var(--rojo-alerta); }
+
+  /* ---------- Modal ---------- */
+  .modal-fondo{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,26,22,.45);
+    z-index:50;
+    align-items:flex-start;
+    justify-content:center;
+    padding:3.5rem 1rem;
+    overflow-y:auto;
+  }
+  .modal-fondo.abierto{ display:flex; }
+  .modal-caja{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    max-width:640px;
+    width:100%;
+    padding:1.6rem 1.8rem 1.8rem;
+  }
+  .modal-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:1rem;
+  }
+  .modal-header h2{ font-size:1.3rem; font-weight:500; }
+  .modal-cerrar{
+    background:none;
+    border:none;
+    font-size:1.5rem;
+    line-height:1;
+    color:var(--tinta-suave);
+    cursor:pointer;
+    padding:0 .2rem;
+  }
+  .grid-form{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:.9rem 1rem;
+  }
+  .grid-form label{
+    display:flex;
+    flex-direction:column;
+    gap:.3rem;
+    font-size:.8rem;
+    color:var(--tinta-suave);
+  }
+  .grid-form label.ancho-completo{ grid-column:1 / -1; }
+  .grid-form input, .grid-form select, .grid-form textarea{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:.88rem;
+    padding:.5rem .6rem;
+    border:1px solid var(--linea);
+    border-radius:2px;
+    color:var(--tinta);
+    background:var(--blanco);
+  }
+  .grid-form textarea{ resize:vertical; }
+  .modal-footer{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:1rem;
+    margin-top:1.3rem;
+  }
+  .modal-mensaje{ font-size:.82rem; color:var(--tinta-suave); }
+  .modal-mensaje.error{ color:var(--rojo-alerta); }
+  .modal-mensaje.ok{ color:var(--verde-monte-2); }
+
+  @media (max-width: 620px){
+    .grid-form{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Table ---------- */
+  .tabla-wrap{
+    overflow-x:auto;
+    border:1px solid var(--linea);
+    background:var(--blanco);
+  }
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:.84rem;
+    min-width:1150px;
+  }
+  thead th{
+    text-align:left;
+    font-weight:600;
+    background:var(--papel-2);
+    color:var(--verde-monte);
+    padding:.65rem .7rem;
+    border-bottom:1px solid var(--linea);
+    white-space:nowrap;
+    position:sticky;
+    top:0;
+  }
+  thead th.ordenable{
+    cursor:pointer;
+    user-select:none;
+  }
+  thead th.ordenable:hover{
+    background:#E2DCC5;
+  }
+  tbody td{
+    padding:.6rem .7rem;
+    border-bottom:1px solid #EAE6D8;
+    vertical-align:top;
+  }
+  tbody tr:hover{ background:#F7F5EA; }
+  td.provincia{ font-weight:500; white-space:nowrap; }
+  td.centro{ text-align:center; }
+  .badge{
+    display:inline-block;
+    padding:.15rem .5rem;
+    font-size:.76rem;
+    border-radius:2px;
+    white-space:nowrap;
+  }
+  .badge.si{ background:#DEE9DA; color:var(--verde-monte-2); }
+  .badge.no{ background:#F1E4DD; color:var(--tierra); }
+  .badge.na{ background:#EFEDE3; color:var(--tinta-suave); }
+  .obs{ max-width:280px; color:var(--tinta-suave); font-size:.8rem; }
+  .if-code{ font-family:"IBM Plex Mono", monospace; font-size:.74rem; color:var(--tinta-suave); }
+  .vacio{
+    padding:2.4rem 1rem;
+    text-align:center;
+    color:var(--tinta-suave);
+  }
+
+  /* ---------- Footer / notas ---------- */
+  .notas{
+    margin-top:2.2rem;
+    padding-top:1.4rem;
+    border-top:1px solid var(--linea);
+    font-size:.82rem;
+    color:var(--tinta-suave);
+    max-width:70ch;
+  }
+  .notas b{ color:var(--tinta); }
+
+  footer{
+    text-align:center;
+    font-size:.78rem;
+    color:var(--tinta-suave);
+    padding:1.6rem 1.5rem 2.4rem;
+  }
+
+  @media (max-width: 720px){
+    .resumen{ grid-template-columns:repeat(2,1fr); margin-top:1.4rem; }
+    header.top{ padding:2rem 1.2rem 2.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="eyebrow">Programa Nacional de Extensión Forestal · Coordinación de Bosques Nativos · Ley 26.331</div>
+    <h1>Monitoreo de planes de manejo y conservación</h1>
+    <p class="sub">Seguimiento en campo de los planes correspondientes a Bosques Nativos, por provincia, trimestre y estado del informe de fiscalización.</p>
+    <div class="meta-line" id="metaLinea">Cargando datos…</div>
+  </div>
+</header>
+
+<main>
+  <section class="resumen" id="resumen"></section>
+
+  <section class="panorama">
+    <h2 id="graficoTitulo">Panorama general — planes monitoreados por provincia y año</h2>
+    <div class="grafico-wrap" id="graficoWrap">
+      <div id="graficoProvincias"></div>
+      <div class="grafico-leyenda" id="graficoLeyenda"></div>
+    </div>
+  </section>
+
+  <div class="anios" id="tabsAnios"></div>
+
+  <div class="filtros">
+    <select id="fProvincia"><option value="">Provincia — todas</option></select>
+    <select id="fTrimestre"><option value="">Trimestre — todos</option></select>
+    <select id="fSAT"><option value="">Alcanzado por SAT — todos</option></select>
+    <input type="text" id="fTexto" placeholder="Buscar por ID de plan, técnico, IF...">
+    <button class="limpiar" id="btnLimpiar">Limpiar filtros</button>
+    <span style="flex:1"></span>
+    <button class="btn-secundario" id="btnActualizar" type="button">↻ Actualizar</button>
+    <button class="btn-primario" id="btnAbrirForm" type="button">+ Agregar monitoreo</button>
+  </div>
+  <div class="conteo-filtro" id="conteoFiltro"></div>
+  <div id="estadoCarga"></div>
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr id="filaEncabezado"></tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="notas">
+    <p><b>Cómo se actualiza esta página:</b> los datos ya no viven en el repositorio — se leen en vivo desde una planilla de Google Sheets a través de un backend en Google Apps Script. Podés cargar un monitoreo nuevo con el botón "+ Agregar monitoreo" (queda escrito directo en la planilla), o editar la planilla misma desde Google Sheets; en ambos casos, con "↻ Actualizar" lo ves reflejado acá.</p>
+  </div>
+</main>
+
+<footer>
+  Datos migrados desde Monitoreo_de_planes.xlsx a Google Sheets — cargá monitoreos nuevos con el botón de arriba.
+</footer>
+
+<div class="modal-fondo" id="modalFondo">
+  <div class="modal-caja">
+    <div class="modal-header">
+      <h2>Agregar monitoreo</h2>
+      <button class="modal-cerrar" id="btnCerrarForm" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <form id="formNuevo">
+      <div class="grid-form">
+        <label>Año
+          <input type="number" id="campo_Año" required>
+        </label>
+        <label>Provincia
+          <input type="text" id="campo_Provincia" list="listaProvincias" required>
+          <datalist id="listaProvincias"></datalist>
+        </label>
+        <label>URE N°
+          <input type="text" id="campo_URE">
+        </label>
+        <label>Trimestre
+          <input type="text" id="campo_Trimestre">
+        </label>
+        <label>ID Plan
+          <input type="text" id="campo_IDPLAN" required>
+        </label>
+        <label>ID POA
+          <input type="text" id="campo_IDPOA">
+        </label>
+        <label>Fecha de monitoreo en campo
+          <input type="date" id="campo_Fecha">
+        </label>
+        <label>Alcanzado por SAT
+          <select id="campo_SAT">
+            <option value="">—</option>
+            <option value="SI">Sí</option>
+            <option value="NO">No</option>
+          </select>
+        </label>
+        <label>Extensionistas ANA
+          <input type="text" id="campo_Extensionistas">
+        </label>
+        <label>Acompañantes en campo
+          <input type="text" id="campo_Tecnicos">
+        </label>
+        <label>IF
+          <input type="text" id="campo_IF">
+        </label>
+        <label class="ancho-completo">Observaciones relevantes para una devolución al ALA
+          <textarea id="campo_Observaciones" rows="2"></textarea>
+        </label>
+        <label class="ancho-completo">Clave para cargar
+          <input type="password" id="campo_Clave" required autocomplete="off">
+        </label>
+      </div>
+      <div class="modal-footer">
+        <span class="modal-mensaje" id="modalMensaje"></span>
+        <button type="submit" class="btn-primario" id="btnGuardarNuevo">Guardar monitoreo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  // --- Configuración del backend (Google Apps Script) ---
+  // Pegar acá la URL que termina en /exec, obtenida al implementar el Apps Script como
+  // aplicación web (ver instrucciones en Code.gs).
+  const API_URL = "https://script.google.com/macros/s/AKfycbxdK_KsJAxR-qSJZZYB7Gei3J-Hg0Kc5FWZ5yv6NtlihgfAQqTa5ZwUN-HsQqiuw8vh/exec";
+
+  const COLUMNAS = [
+    { key:"Provincia", label:"Provincia" },
+    { key:"URE N°", label:"URE" },
+    { key:"Trimestre", label:"Trim." },
+    { key:"ID PLAN", label:"ID Plan" },
+    { key:"ID POA", label:"ID POA" },
+    { key:"Fecha de monitoreo en campo", label:"Fecha monitoreo" },
+    { key:"Alcanzado por SAT?", label:"SAT" },
+    { key:"Extensionistas ANA", label:"Extensionistas ANA" },
+    { key:"Acompañantes en campo", label:"Acompañantes en campo" },
+    { key:"IF", label:"IF" },
+    { key:"Observaciones relevantes para una devolución al ALA", label:"Observaciones" }
+  ];
+
+  let MONITOREO_DATA = {};
+  let anios = [];
+  let anioActivo = null;
+
+  // Google Sheets devuelve las fechas como timestamp completo en UTC
+  // (ej. "2025-04-07T03:00:00.000Z"); acá nos quedamos solo con aaaa-mm-dd.
+  function soloFecha(v){
+    if(v === null || v === undefined) return v;
+    const m = String(v).match(/^(\d{4}-\d{2}-\d{2})T/);
+    return m ? m[1] : v;
+  }
+
+  function agruparPorAnio(registrosPlanos){
+    const out = {};
+    registrosPlanos.forEach(r=>{
+      r = { ...r, "Fecha de monitoreo en campo": soloFecha(r["Fecha de monitoreo en campo"]) };
+      const a = String(r["Año"] ?? "").trim() || "Sin año";
+      if(!out[a]) out[a] = [];
+      out[a].push(r);
+    });
+    return out;
+  }
+
+  const norm = v => (v === null || v === undefined) ? "" : String(v).trim();
+  const normProvincia = v => {
+    const n = norm(v);
+    if(!n) return "";
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  };
+  const normSat = v => {
+    const n = norm(v).toUpperCase();
+    if(n === "SI" || n === "SÍ") return "Sí";
+    if(n === "NO") return "No";
+    return "";
+  };
+
+  function elOptions(select, valores, placeholder){
+    valores.forEach(v=>{
+      const o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      select.appendChild(o);
+    });
+  }
+
+  const TODOS_KEY = "Todos";
+
+  function pintarTabsAnios(){
+    const cont = document.getElementById("tabsAnios");
+    cont.innerHTML = "";
+    anios.forEach(a=>{
+      const b = document.createElement("button");
+      b.textContent = a;
+      b.className = a === anioActivo ? "activo" : "";
+      b.addEventListener("click", ()=>{ anioActivo = a; render(); });
+      cont.appendChild(b);
+    });
+    if(anios.length){
+      const b = document.createElement("button");
+      b.textContent = "Todos los planes";
+      b.className = anioActivo === TODOS_KEY ? "activo" : "";
+      b.addEventListener("click", ()=>{ anioActivo = TODOS_KEY; render(); });
+      cont.appendChild(b);
+    }
+  }
+
+  function columnasActivas(){
+    return anioActivo === TODOS_KEY
+      ? [{ key:"Año", label:"Año" }, ...COLUMNAS]
+      : COLUMNAS;
+  }
+
+  let ordenColumna = null;
+  let ordenDireccion = 1; // 1 = ascendente, -1 = descendente
+
+  function compararValores(x, y){
+    const nx = norm(x), ny = norm(y);
+    if(nx === "" && ny === "") return 0;
+    if(nx === "") return 1;
+    if(ny === "") return -1;
+    const soloNumero = s => /^-?\d+([.,]\d+)?$/.test(s);
+    if(soloNumero(nx) && soloNumero(ny)){
+      return parseFloat(nx.replace(",", ".")) - parseFloat(ny.replace(",", "."));
+    }
+    return nx.localeCompare(ny, "es", { sensitivity:"base" });
+  }
+
+  function pintarEncabezado(){
+    const tr = document.getElementById("filaEncabezado");
+    tr.innerHTML = "";
+    columnasActivas().forEach(c=>{
+      const th = document.createElement("th");
+      th.className = "ordenable";
+      let flecha = "";
+      if(ordenColumna === c.key) flecha = ordenDireccion === 1 ? " ▲" : " ▼";
+      th.textContent = c.label + flecha;
+      th.addEventListener("click", ()=>{
+        if(ordenColumna === c.key){
+          ordenDireccion = -ordenDireccion;
+        } else {
+          ordenColumna = c.key;
+          ordenDireccion = 1;
+        }
+        render();
+      });
+      tr.appendChild(th);
+    });
+  }
+
+  function badgeSat(v){
+    const s = normSat(v);
+    if(s === "Sí") return '<span class="badge si">Sí</span>';
+    if(s === "No") return '<span class="badge no">No</span>';
+    return '<span class="badge na">—</span>';
+  }
+
+  function celda(col, row){
+    const raw = row[col.key];
+    const val = norm(raw);
+    if(col.key === "Año") return `<td class="centro">${val || "—"}</td>`;
+    if(col.key === "Provincia") return `<td class="provincia">${normProvincia(raw) || "—"}</td>`;
+    if(col.key === "Trimestre" || col.key === "URE N°") return `<td class="centro">${val || "—"}</td>`;
+    if(col.key === "Alcanzado por SAT?") return `<td class="centro">${badgeSat(raw)}</td>`;
+    if(col.key === "IF") return `<td class="if-code">${val || "—"}</td>`;
+    if(col.key === "Observaciones relevantes para una devolución al ALA") return `<td class="obs">${val || "—"}</td>`;
+    return `<td>${val || "—"}</td>`;
+  }
+
+  function datosDelAnio(){
+    if(anioActivo === TODOS_KEY){
+      return anios.flatMap(a => MONITOREO_DATA[a] || []);
+    }
+    return MONITOREO_DATA[anioActivo] || [];
+  }
+
+  function poblarFiltros(){
+    const datos = datosDelAnio();
+    const provincias = [...new Set(datos.map(r=>normProvincia(r["Provincia"])).filter(Boolean))].sort();
+    const trimestres = [...new Set(datos.map(r=>norm(r["Trimestre"])).filter(Boolean))].sort();
+
+    const fP = document.getElementById("fProvincia");
+    const fT = document.getElementById("fTrimestre");
+    const valP = fP.value, valT = fT.value;
+
+    fP.innerHTML = '<option value="">Provincia — todas</option>';
+    fT.innerHTML = '<option value="">Trimestre — todos</option>';
+    elOptions(fP, provincias);
+    elOptions(fT, trimestres.map(t=>t));
+
+    if(provincias.includes(valP)) fP.value = valP;
+    if(trimestres.includes(valT)) fT.value = valT;
+  }
+
+  function aplicarFiltros(datos){
+    const p = document.getElementById("fProvincia").value;
+    const t = document.getElementById("fTrimestre").value;
+    const sat = document.getElementById("fSAT").value;
+    const texto = document.getElementById("fTexto").value.trim().toLowerCase();
+
+    return datos.filter(r=>{
+      if(p && normProvincia(r["Provincia"]) !== p) return false;
+      if(t && norm(r["Trimestre"]) !== t) return false;
+      if(sat && normSat(r["Alcanzado por SAT?"]) !== sat) return false;
+      if(texto){
+        const bolsa = [
+          r["ID PLAN"], r["ID POA"], r["Acompañantes en campo"],
+          r["IF"], r["Provincia"], r["Observaciones relevantes para una devolución al ALA"]
+        ].map(norm).join(" ").toLowerCase();
+        if(!bolsa.includes(texto)) return false;
+      }
+      return true;
+    });
+  }
+
+  function pintarTabla(datos){
+    const tbody = document.getElementById("cuerpoTabla");
+    const cols = columnasActivas();
+    tbody.innerHTML = "";
+    if(datos.length === 0){
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = cols.length;
+      td.className = "vacio";
+      td.textContent = "No hay registros que coincidan con los filtros aplicados.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+    const columnaOrden = ordenColumna || "Fecha de monitoreo en campo";
+    datos
+      .slice()
+      .sort((a,b)=> compararValores(a[columnaOrden], b[columnaOrden]) * ordenDireccion)
+      .forEach(row=>{
+        const tr = document.createElement("tr");
+        cols.forEach(c=>{ tr.innerHTML += celda(c, row); });
+        tbody.appendChild(tr);
+      });
+  }
+
+  function pintarResumen(datosAnio){
+    const total = datosAnio.length;
+    const conSat = datosAnio.filter(r=>normSat(r["Alcanzado por SAT?"]) === "Sí").length;
+
+    const pct = (n)=> total ? Math.round((n/total)*100) : 0;
+    const etiquetaPeriodo = anioActivo === TODOS_KEY ? "en total" : `en ${anioActivo}`;
+
+    document.getElementById("resumen").innerHTML = `
+      <div class="celda">
+        <div class="num">${total}</div>
+        <div class="etiqueta">Planes monitoreados ${etiquetaPeriodo}</div>
+      </div>
+      <div class="celda">
+        <div class="num">${pct(conSat)}<small>%</small></div>
+        <div class="etiqueta">Alcanzados por SAT (${conSat})</div>
+      </div>
+    `;
+  }
+
+  function pintarMeta(){
+    const totalGeneral = anios.reduce((acc,a)=>acc + (MONITOREO_DATA[a]||[]).length, 0);
+    document.getElementById("metaLinea").textContent = anios.length
+      ? `${totalGeneral} registros cargados en total, entre ${anios[0]} y ${anios[anios.length-1]}.`
+      : "Sin datos por el momento.";
+  }
+
+  // --- Gráfico: planes monitoreados por provincia y año (histórico completo) ---
+  const PALETA_ANIOS = ["#8A5A34", "#2F4F3A", "#B9812E", "#5B6F82", "#A6432F", "#6E6350"];
+
+  function pintarGrafico(datosAnio){
+    const cont = document.getElementById("graficoProvincias");
+    const leyendaEl = document.getElementById("graficoLeyenda");
+    const tituloEl = document.getElementById("graficoTitulo");
+
+    if(tituloEl){
+      tituloEl.textContent = anioActivo === TODOS_KEY
+        ? "Panorama general — planes monitoreados por provincia y año"
+        : `Planes monitoreados por provincia — ${anioActivo}`;
+    }
+
+    if(!datosAnio.length){
+      cont.innerHTML = '<div class="grafico-vacio">Todavía no hay datos para graficar.</div>';
+      leyendaEl.innerHTML = "";
+      return;
+    }
+
+    const porProvincia = {};
+    datosAnio.forEach(r=>{
+      const p = normProvincia(r["Provincia"]) || "Sin provincia";
+      const a = String(r["Año"] ?? "").trim() || "Sin año";
+      if(!porProvincia[p]) porProvincia[p] = {};
+      porProvincia[p][a] = (porProvincia[p][a] || 0) + 1;
+    });
+
+    const totalDe = p => Object.values(porProvincia[p]).reduce((s,v)=>s+v, 0);
+    const provincias = Object.keys(porProvincia).sort((a,b)=> totalDe(b) - totalDe(a));
+    // Sólo los años presentes en los datos que se están mostrando (uno solo si hay una
+    // pestaña de año activa, o todos si estamos en "Todos los planes").
+    const aniosOrdenados = anios.filter(a => datosAnio.some(r => String(r["Año"] ?? "").trim() === a));
+    const colorAnio = {};
+    aniosOrdenados.forEach((a,i)=> colorAnio[a] = PALETA_ANIOS[i % PALETA_ANIOS.length]);
+
+    const maxCount = Math.max(1, ...provincias.map(p =>
+      Math.max(...aniosOrdenados.map(a => porProvincia[p][a] || 0))
+    ));
+
+    const barW = 14, gapBarras = 3, gapGrupo = 26;
+    const margenIzq = 42, margenSup = 14, altoGrafico = 200, margenInf = 78;
+    const anchoGrupo = aniosOrdenados.length * barW + (aniosOrdenados.length - 1) * gapBarras;
+    const anchoTotal = margenIzq + 12 + provincias.length * (anchoGrupo + gapGrupo);
+    const altoTotal = margenSup + altoGrafico + margenInf;
+    const escalaY = altoGrafico / maxCount;
+
+    let ticksSvg = "";
+    const numTicks = 4;
+    for(let i=0;i<=numTicks;i++){
+      const val = Math.round(maxCount * i / numTicks);
+      const y = margenSup + altoGrafico - val * escalaY;
+      ticksSvg += `<line x1="${margenIzq-6}" y1="${y}" x2="${anchoTotal}" y2="${y}" stroke="#E6E2D2" stroke-width="1"/>`;
+      ticksSvg += `<text x="${margenIzq-10}" y="${y+3.5}" font-size="10" fill="#514E44" text-anchor="end">${val}</text>`;
+    }
+
+    let barrasSvg = "", etiquetasSvg = "";
+    provincias.forEach((p,i)=>{
+      const xGrupo = margenIzq + i * (anchoGrupo + gapGrupo);
+      aniosOrdenados.forEach((a,j)=>{
+        const count = porProvincia[p][a] || 0;
+        const alto = count * escalaY;
+        const x = xGrupo + j * (barW + gapBarras);
+        const y = margenSup + altoGrafico - alto;
+        if(count > 0){
+          barrasSvg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${alto.toFixed(1)}" fill="${colorAnio[a]}"><title>${p} — ${a}: ${count} plan(es)</title></rect>`;
+        }
+      });
+      const xLabel = xGrupo + anchoGrupo / 2;
+      const yLabel = margenSup + altoGrafico + 14;
+      etiquetasSvg += `<text x="${xLabel.toFixed(1)}" y="${yLabel}" font-size="10.5" fill="#1C1A16" text-anchor="end" transform="rotate(-40 ${xLabel.toFixed(1)} ${yLabel})">${p}</text>`;
+    });
+
+    cont.innerHTML = `<svg viewBox="0 0 ${anchoTotal} ${altoTotal}" width="${anchoTotal}" height="${altoTotal}" xmlns="http://www.w3.org/2000/svg" style="font-family:'IBM Plex Sans',sans-serif; display:block;">
+      <line x1="${margenIzq}" y1="${margenSup}" x2="${margenIzq}" y2="${margenSup+altoGrafico}" stroke="#C9C3AC" stroke-width="1"/>
+      <line x1="${margenIzq}" y1="${margenSup+altoGrafico}" x2="${anchoTotal}" y2="${margenSup+altoGrafico}" stroke="#C9C3AC" stroke-width="1"/>
+      ${ticksSvg}
+      ${barrasSvg}
+      ${etiquetasSvg}
+    </svg>`;
+
+    leyendaEl.innerHTML = aniosOrdenados
+      .map(a => `<span><span class="punto" style="background:${colorAnio[a]}"></span>${a}</span>`)
+      .join("");
+  }
+
+  function render(){
+    pintarTabsAnios();
+    pintarEncabezado();
+    poblarFiltros();
+    const datosAnio = datosDelAnio();
+    pintarGrafico(datosAnio);
+    pintarResumen(datosAnio);
+    const filtrados = aplicarFiltros(datosAnio);
+    const etiquetaPeriodo = anioActivo === TODOS_KEY ? "en total" : `de ${anioActivo}`;
+    document.getElementById("conteoFiltro").textContent = anioActivo
+      ? `Mostrando ${filtrados.length} de ${datosAnio.length} registros ${etiquetaPeriodo}.`
+      : "";
+    pintarTabla(filtrados);
+  }
+
+  ["fProvincia","fTrimestre","fSAT","fTexto"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", render);
+    document.getElementById(id).addEventListener("change", render);
+  });
+  document.getElementById("btnLimpiar").addEventListener("click", ()=>{
+    document.getElementById("fProvincia").value = "";
+    document.getElementById("fTrimestre").value = "";
+    document.getElementById("fSAT").value = "";
+    document.getElementById("fTexto").value = "";
+    render();
+  });
+
+  // --- Carga de datos desde el backend ---
+  async function cargarDatos(){
+    const estadoEl = document.getElementById("estadoCarga");
+    if(API_URL.includes("PEGAR_AQUI")){
+      estadoEl.className = "error";
+      estadoEl.textContent = "Falta configurar la URL del backend (API_URL) en el código de esta página.";
+      return;
+    }
+    estadoEl.className = "";
+    estadoEl.textContent = "Cargando datos desde la planilla…";
+    try{
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || "el backend respondió con un error");
+      MONITOREO_DATA = agruparPorAnio(data.registros);
+      anios = Object.keys(MONITOREO_DATA).sort();
+      if(!anioActivo || !anios.includes(anioActivo)){
+        anioActivo = anios[anios.length - 1] || null;
+      }
+      estadoEl.textContent = "";
+      pintarMeta();
+      render();
+    }catch(err){
+      estadoEl.className = "error";
+      estadoEl.textContent = "No se pudieron cargar los datos (" + err.message + "). Probá con \"Actualizar\".";
+    }
+  }
+
+  document.getElementById("btnActualizar").addEventListener("click", cargarDatos);
+
+  // --- Modal para agregar un monitoreo ---
+  const modalFondo = document.getElementById("modalFondo");
+  const formNuevo = document.getElementById("formNuevo");
+  const modalMensaje = document.getElementById("modalMensaje");
+  const btnGuardar = document.getElementById("btnGuardarNuevo");
+
+  function abrirModal(){
+    document.getElementById("campo_Año").value = anioActivo || new Date().getFullYear();
+    const provinciasConocidas = [...new Set(
+      anios.flatMap(a => MONITOREO_DATA[a]).map(r => normProvincia(r["Provincia"])).filter(Boolean)
+    )].sort();
+    const dl = document.getElementById("listaProvincias");
+    dl.innerHTML = provinciasConocidas.map(p => `<option value="${p}">`).join("");
+    modalMensaje.textContent = "";
+    modalMensaje.className = "modal-mensaje";
+    modalFondo.classList.add("abierto");
+  }
+  function cerrarModal(){
+    modalFondo.classList.remove("abierto");
+    formNuevo.reset();
+  }
+
+  document.getElementById("btnAbrirForm").addEventListener("click", abrirModal);
+  document.getElementById("btnCerrarForm").addEventListener("click", cerrarModal);
+  modalFondo.addEventListener("click", (e)=>{ if(e.target === modalFondo) cerrarModal(); });
+
+  formNuevo.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    if(API_URL.includes("PEGAR_AQUI")){
+      modalMensaje.className = "modal-mensaje error";
+      modalMensaje.textContent = "Falta configurar la URL del backend en el código de esta página.";
+      return;
+    }
+
+    const registro = {
+      "Año": document.getElementById("campo_Año").value.trim(),
+      "Provincia": document.getElementById("campo_Provincia").value.trim(),
+      "URE N°": document.getElementById("campo_URE").value.trim(),
+      "Trimestre": document.getElementById("campo_Trimestre").value.trim(),
+      "ID PLAN": document.getElementById("campo_IDPLAN").value.trim(),
+      "ID POA": document.getElementById("campo_IDPOA").value.trim(),
+      "Fecha de monitoreo en campo": document.getElementById("campo_Fecha").value.trim(),
+      "Alcanzado por SAT?": document.getElementById("campo_SAT").value,
+      "Extensionistas ANA": document.getElementById("campo_Extensionistas").value.trim(),
+      "Acompañantes en campo": document.getElementById("campo_Tecnicos").value.trim(),
+      "IF": document.getElementById("campo_IF").value.trim(),
+      "Observaciones relevantes para una devolución al ALA": document.getElementById("campo_Observaciones").value.trim()
+    };
+    const clave = document.getElementById("campo_Clave").value;
+
+    btnGuardar.disabled = true;
+    modalMensaje.className = "modal-mensaje";
+    modalMensaje.textContent = "Guardando…";
+
+    try{
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita el preflight CORS con Apps Script
+        body: JSON.stringify({ clave, registro })
+      });
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || "Error desconocido");
+      modalMensaje.className = "modal-mensaje ok";
+      modalMensaje.textContent = "Guardado correctamente.";
+      await cargarDatos();
+      setTimeout(cerrarModal, 700);
+    }catch(err){
+      modalMensaje.className = "modal-mensaje error";
+      modalMensaje.textContent = "No se pudo guardar: " + err.message;
+    }finally{
+      btnGuardar.disabled = false;
+    }
+  });
+
+  cargarDatos();
+})();
+</script>
+</body>
+</html>
